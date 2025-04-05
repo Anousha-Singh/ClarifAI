@@ -1,11 +1,27 @@
-import { useState } from 'react';
+"use client"
+import { useState, FormEvent, ChangeEvent, DragEvent } from 'react';
 import React from 'react'
 import PropTypes from 'prop-types';
 import { Upload, Shield, Scale, Heart, Brain, Menu, X } from 'lucide-react';
 
+interface CustomAlertProps {
+  children: React.ReactNode;
+}
+
+interface ContactForm {
+  name: string;
+  email: string;
+  message: string;
+}
+
+interface Feature {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
 
 // Custom Alert Component
-const CustomAlert = ({ children }) => (
+const CustomAlert: React.FC<CustomAlertProps> = ({ children }) => (
   <div className="flex p-4 mb-6 text-sm rounded-lg bg-blue-900/20 border border-blue-400/20 text-gray-300">
     {children}
   </div>
@@ -15,27 +31,27 @@ CustomAlert.propTypes = {
   children: PropTypes.node.isRequired
 };
 
-const App = () => {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [prediction, setPrediction] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const App: React.FC = () => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [prediction, setPrediction] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   
   // Contact form state
-  const [contactModalOpen, setContactModalOpen] = useState(false);
-  const [contactForm, setContactForm] = useState({
+  const [contactModalOpen, setContactModalOpen] = useState<boolean>(false);
+  const [contactForm, setContactForm] = useState<ContactForm>({
     name: '',
     email: '',
     message: ''
   });
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [formError, setFormError] = useState(null);
+  const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
+  const [formError, setFormError] = useState<string | null>(null);
   
   // Ethics modal state
-  const [ethicsModalOpen, setEthicsModalOpen] = useState(false);
+  const [ethicsModalOpen, setEthicsModalOpen] = useState<boolean>(false);
 
-  const features = [
+  const features: Feature[] = [
     { 
       icon: <Scale className="w-6 h-6 md:w-8 md:h-8" />, 
       title: "Ethical Analysis", 
@@ -58,21 +74,21 @@ const App = () => {
     }
   ];
 
-  const handleFileSelect = async (event) => {
-    const file = event.target.files[0];
+  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file && isValidFileType(file)) {
       setSelectedFile(file);
       setPrediction(null);
     }
   };
 
-  const handleDrag = (event) => {
+  const handleDrag = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     setDragActive(event.type === "dragenter" || event.type === "dragover");
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     setDragActive(false);
@@ -83,11 +99,11 @@ const App = () => {
     }
   };
 
-  const isValidFileType = (file) => {
+  const isValidFileType = (file: File) => {
     return ['video/mp4', 'video/quicktime'].includes(file.type);
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedFile) return;
 
@@ -129,7 +145,7 @@ const App = () => {
     setEthicsModalOpen(false);
   };
 
-  const handleContactChange = (e) => {
+  const handleContactChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setContactForm(prev => ({
       ...prev,
@@ -137,119 +153,73 @@ const App = () => {
     }));
   };
 
-  // const handleContactSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setFormError(null);
+  const handleContactSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     
-  //   // Basic validation
-  //   if (!contactForm.name || !contactForm.email || !contactForm.message) {
-  //     setFormError("All fields are required");
-  //     return;
-  //   }
+    // Validate form fields
+    if (!contactForm.name || !contactForm.email || !contactForm.message) {
+      setFormError("All fields are required");
+      return;
+    }
     
-  //   // Email validation
-  //   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  //   if (!emailRegex.test(contactForm.email)) {
-  //     setFormError("Please enter a valid email address");
-  //     return;
-  //   }
-
-  //   // Simulating form submission
-  //   try {
-  //     // In production, replace with actual API call
-  //     // await fetch('/api/contact', {
-  //     //   method: 'POST',
-  //     //   headers: { 'Content-Type': 'application/json' },
-  //     //   body: JSON.stringify(contactForm)
-  //     // });
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(contactForm.email)) {
+      setFormError("Please enter a valid email address");
+      return;
+    }
+    
+    try {
+      setFormError("");
       
-  //     // Simulate API delay
-  //     await new Promise(resolve => setTimeout(resolve, 1000));
+      // Option 2: Using a third-party service like EmailJS
+      /* 
+      await emailjs.send(
+        'YOUR_SERVICE_ID',  // Replace with your service ID
+        'YOUR_TEMPLATE_ID', // Replace with your template ID
+        contactForm,
+        'YOUR_USER_ID'      // Replace with your user ID
+      );
+      */
       
-  //     setFormSubmitted(true);
-  //     setContactForm({ name: '', email: '', message: '' });
+      // Option 3: Using a serverless function (e.g., AWS Lambda, Netlify Functions)
+      /*
+      await fetch('/.netlify/functions/send-email', {
+        method: 'POST',
+        body: JSON.stringify(contactForm),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      */
       
-  //     // Close modal after 3 seconds on successful submission
-  //     setTimeout(() => {
-  //       closeContactModal();
-  //     }, 3000);
-  //   } catch (error) {
-  //     console.error('Error submitting form:', error);
-  //     setFormError("Something went wrong. Please try again later.");
-  //   }
-  // };
-
-  // Add this import at the top of your file
-
-
-// Update your handleContactSubmit function
-const handleContactSubmit = async (e) => {
-  e.preventDefault();
-  
-  // Validate form fields
-  if (!contactForm.name || !contactForm.email || !contactForm.message) {
-    setFormError("All fields are required");
-    return;
-  }
-  
-  // Email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(contactForm.email)) {
-    setFormError("Please enter a valid email address");
-    return;
-  }
-  
-  try {
-    setFormError("");
-    
-    // Option 2: Using a third-party service like EmailJS
-    /* 
-    await emailjs.send(
-      'YOUR_SERVICE_ID',  // Replace with your service ID
-      'YOUR_TEMPLATE_ID', // Replace with your template ID
-      contactForm,
-      'YOUR_USER_ID'      // Replace with your user ID
-    );
-    */
-    
-    // Option 3: Using a serverless function (e.g., AWS Lambda, Netlify Functions)
-    /*
-    await fetch('/.netlify/functions/send-email', {
-      method: 'POST',
-      body: JSON.stringify(contactForm),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    */
-    
-    setFormSubmitted(true);
-    
-    // Reset form after successful submission
-    setContactForm({
-      name: '',
-      email: '',
-      message: ''
-    });
-    
-    // Optionally close the modal after a delay
-    setTimeout(() => {
-      closeContactModal();
-      setFormSubmitted(false);
-    }, 3000);
-    
-  } catch (error) {
-    console.error('Error sending message:', error);
-    setFormError("Failed to send message. Please try again later.");
-  }
-};
+      setFormSubmitted(true);
+      
+      // Reset form after successful submission
+      setContactForm({
+        name: '',
+        email: '',
+        message: ''
+      });
+      
+      // Optionally close the modal after a delay
+      setTimeout(() => {
+        closeContactModal();
+        setFormSubmitted(false);
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setFormError("Failed to send message. Please try again later.");
+    }
+  };
 
   const handleContactClick = () => {
     openContactModal();
   };
 
   const toggleEthicsModal = () => {
-    setShowEthicsModal(!showEthicsModal);
+    setEthicsModalOpen(!ethicsModalOpen);
   };
 
   return (
@@ -266,7 +236,7 @@ const handleContactSubmit = async (e) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               {/* <Shield className="w-8 h-8 text-blue-400" /> */}
-              <img width="35px" src="../src/assets/logo.svg" alt="" />
+              <img width="35px" src="logo.svg" alt="" />
               <span className="pl-2 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
                 ClarifAI
               </span>
@@ -581,7 +551,7 @@ const handleContactSubmit = async (e) => {
                       name="message"
                       value={contactForm.message}
                       onChange={handleContactChange}
-                      rows="4"
+                      rows={4}
                       className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                       placeholder="How can we help you?"
                     ></textarea>
