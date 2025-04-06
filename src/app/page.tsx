@@ -516,14 +516,14 @@ const App: React.FC = () => {
                   Contact Us
                 </h3>
                 <p className="text-gray-300 mt-2">
-                  We'd love to hear from you. Fill out the form below and we'll get back to you as soon as possible.
+                  We&apos;d love to hear from you. Fill out the form below and we&apos;ll get back to you as soon as possible.
                 </p>
               </div>
 
               {formSubmitted ? (
                 <div className="p-6 rounded-xl bg-green-900/20 border border-green-400/20 text-center">
                   <h4 className="text-xl font-medium text-green-400 mb-2">Message Sent!</h4>
-                  <p className="text-gray-300">Thank you for reaching out. We'll get back to you shortly.</p>
+                  <p className="text-gray-300">Thank you for reaching out. We&apos;ll get back to you shortly.</p>
                 </div>
               ) : (
                 <form onSubmit={handleContactSubmit} className="space-y-4">
@@ -646,7 +646,7 @@ const App: React.FC = () => {
 
                 <h4 className="text-xl font-medium text-blue-400 mb-4">5. Disclaimers</h4>
                 <p className="text-gray-300 mb-4">
-                  ClarifAI is provided "as is" without warranties of any kind, either express or implied. We do not warrant that the service will be uninterrupted or error-free, that defects will be corrected, or that the platform is free of viruses or other harmful components.
+                  ClarifAI is provided &quot;as is&quot; without warranties of any kind, either express or implied. We do not warrant that the service will be uninterrupted or error-free, that defects will be corrected, or that the platform is free of viruses or other harmful components.
                 </p>
 
                 <h4 className="text-xl font-medium text-blue-400 mb-4">6. Limitation of Liability</h4>

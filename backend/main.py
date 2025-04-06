@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse 
 import torch
 import shutil
 import os
@@ -39,7 +39,7 @@ async def predict(video: UploadFile = File(...)):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(video.file, buffer)
 
-    result = predict_from_video(model, file_path, device)  # e.g., returns "real"
+    result = predict_from_video(model, file_path, device)  
 
     os.remove(file_path)
 
