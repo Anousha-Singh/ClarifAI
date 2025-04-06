@@ -1,10 +1,11 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import torch
 import shutil
 import os
-from model_class import Model
-from predict_utils import predict_from_video
+from backend.model_class import Model
+from backend.predict_utils import predict_from_video
 
 app = FastAPI()
 
@@ -19,8 +20,11 @@ app.add_middleware(
 
 # Load model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+model_path = os.path.join(os.path.dirname(__file__), "model.pt")
+
 model = Model(num_classes=2)
-model.load_state_dict(torch.load("model.pt", map_location=device))
+model.load_state_dict(torch.load(model_path, map_location=device))
 model.eval()
 model.to(device)
 
@@ -29,13 +33,29 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/predict")
 async def predict(video: UploadFile = File(...)):
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
     file_path = os.path.join(UPLOAD_DIR, video.filename)
+
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(video.file, buffer)
 
-    result = predict_from_video(model, file_path, device)
+    result = predict_from_video(model, file_path, device)  # e.g., returns "real"
 
-    # Clean up uploaded file
     os.remove(file_path)
 
-    return result
+    if "error" in result:
+        return JSONResponse(status_code=400, content={"error": result["error"]})
+
+    label = "fake" if result["class"] == 1 else "real"
+    confidence = result["confidence"]
+
+    return {
+        "prediction": label,
+        "confidence": confidence
+    }
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Deepfake Detection API is running "}
+

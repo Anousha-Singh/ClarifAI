@@ -16,11 +16,9 @@
 # next.js
 /.next/
 /out/
-/backend/Lib/
-/backend/Scripts/
-/backend/share/
 get-pip.py
 model.pt
+/backend/venv/
 
 
 # production

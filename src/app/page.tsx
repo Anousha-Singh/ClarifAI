@@ -34,6 +34,8 @@ CustomAlert.propTypes = {
 const App: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [prediction, setPrediction] = useState<string | null>(null);
+  const [confidence, setConfidence] = useState<number | null>(null);
+
   const [loading, setLoading] = useState<boolean>(false);
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -106,24 +108,29 @@ const App: React.FC = () => {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedFile) return;
-
+  
     setLoading(true);
     const formData = new FormData();
-    formData.append('file', selectedFile);
-
+    formData.append('video', selectedFile); // make sure 'video' matches FastAPI param
+  
     try {
-      const response = await fetch('http://localhost:5000/predict', {
+      const response = await fetch('http://127.0.0.1:8000/predict', {
         method: 'POST',
         body: formData,
       });
+  
       const data = await response.json();
+      console.log('Response:', data);
+  
       setPrediction(data.prediction);
+      setConfidence(data.confidence);
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
+  
 
   // Contact form handlers
   const openContactModal = () => {
@@ -416,16 +423,30 @@ const App: React.FC = () => {
               </button>
             </form>
 
-            {prediction && (
+            {/* {prediction && (
               <div className="mt-6 p-6 rounded-xl bg-white/5 border border-white/10 animate-fade-in">
                 <h3 className="text-xl font-semibold mb-3">Analysis Results</h3>
                 <p className="text-gray-300">
-                  {prediction === 'real'
+                  {prediction === '0'
                     ? 'This content appears to be authentic. However, we encourage critical thinking and verification from multiple sources.'
                     : 'This content shows potential signs of manipulation. We recommend seeking additional verification and context.'}
                 </p>
               </div>
+            )} */}
+            {prediction && confidence !== null && (
+              <div className="mt-6 p-6 rounded-xl bg-white/5 border border-white/10 animate-fade-in">
+                <h3 className="text-xl font-semibold mb-3">Analysis Results</h3>
+                <p className="text-gray-300 font-medium">
+                  {prediction.toUpperCase()} ({(confidence * 100).toFixed(2)}% confidence)
+                </p>
+                <p className="text-gray-400 text-sm mt-2">
+                  {prediction.toLowerCase() === 'real'
+                    ? 'This content appears to be authentic. However, always verify from multiple sources.'
+                    : 'This content shows potential signs of manipulation. Consider verifying with trusted sources.'}
+                </p>
+              </div>
             )}
+
           </div>
         </div>
       </main>

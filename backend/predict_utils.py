@@ -60,3 +60,74 @@ def predict_from_video(model, video_path, device):
         "class": int(predicted_class),
         "confidence": float(confidence)
     }
+
+##### Cannot use this code as it is not working #####
+# import torch
+# import cv2
+# import numpy as np
+# from torchvision import transforms
+# from torch.utils.data import Dataset
+# import face_recognition
+
+# # Image preprocessing settings
+# im_size = 112
+# mean = [0.485, 0.456, 0.406]
+# std = [0.229, 0.224, 0.225]
+
+# train_transforms = transforms.Compose([
+#     transforms.ToPILImage(),
+#     transforms.Resize((im_size, im_size)),
+#     transforms.ToTensor(),
+#     transforms.Normalize(mean, std)
+# ])
+
+# # Custom dataset class for extracting and transforming video frames
+# class VideoFaceDataset(Dataset):
+#     def __init__(self, video_path, sequence_length=20, transform=None):
+#         self.video_path = video_path
+#         self.transform = transform
+#         self.sequence_length = sequence_length
+
+#     def __len__(self):
+#         return 1
+
+#     def __getitem__(self, idx):
+#         frames = []
+#         cap = cv2.VideoCapture(self.video_path)
+#         success, frame = cap.read()
+#         while success and len(frames) < self.sequence_length:
+#             faces = face_recognition.face_locations(frame)
+#             if faces:
+#                 try:
+#                     top, right, bottom, left = faces[0]
+#                     face_img = frame[top:bottom, left:right, :]
+#                     if self.transform:
+#                         face_img = self.transform(face_img)
+#                     frames.append(face_img)
+#                 except:
+#                     pass
+#             success, frame = cap.read()
+#         cap.release()
+
+#         # Pad with zeros if not enough frames
+#         while len(frames) < self.sequence_length:
+#             frames.append(torch.zeros_like(frames[0]))
+
+#         return torch.stack(frames).unsqueeze(0)  # shape: (1, seq_len, C, H, W)
+
+# # Prediction function with heatmap disabled
+# def predict_from_video(model, video_path, device):
+#     dataset = VideoFaceDataset(video_path, transform=train_transforms)
+#     video_tensor = dataset[0].to(device)
+
+#     model.eval()
+#     with torch.no_grad():
+#         _, output = model(video_tensor)
+#         probs = torch.softmax(output, dim=1).squeeze()
+#         predicted_class = torch.argmax(probs).item()
+#         confidence = probs[predicted_class].item()
+
+#     return {
+#         "class": int(predicted_class),
+#         "confidence": float(confidence)
+#     }
