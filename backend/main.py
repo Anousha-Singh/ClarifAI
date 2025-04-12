@@ -6,6 +6,17 @@ import shutil
 import os
 from backend.model_class import Model
 from backend.predict_utils import predict_from_video
+import gdown
+
+# Extracted file ID from the Google Drive share link
+FILE_ID = "1nn4yUdbov7POAuMaFeJRiCLVwGTUU_hk"
+MODEL_PATH = os.path.join("backend", "model.pt")
+
+if not os.path.exists(MODEL_PATH):
+    # Generate the correct download URL
+    download_url = f"https://drive.google.com/uc?id={FILE_ID}"
+    gdown.download(download_url, MODEL_PATH, quiet=False)
+
 
 app = FastAPI()
 
