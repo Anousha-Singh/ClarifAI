@@ -30,14 +30,14 @@ app.add_middleware(
 )
 
 # Load model
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model_path = os.path.join(os.path.dirname(__file__), "model.pt")
 
 model = Model(num_classes=2)
-model.load_state_dict(torch.load(model_path, map_location=device))
+model.load_state_dict(torch.load(model_path, map_location="cpu"))
 model.eval()
-model.to(device)
+model.to("cpu")
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -50,7 +50,7 @@ async def predict(video: UploadFile = File(...)):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(video.file, buffer)
 
-    result = predict_from_video(model, file_path, device)  
+    result = predict_from_video(model, file_path, "cpu")  
 
     os.remove(file_path)
 
