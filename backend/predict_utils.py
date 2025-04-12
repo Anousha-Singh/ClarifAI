@@ -35,7 +35,7 @@ def extract_faces_from_video(video_path, max_frames=32):
     cap.release()
     return faces
 
-def preprocess_faces(faces, image_size=224):
+def preprocess_faces(faces, image_size=112):
     transform = transforms.Compose([
         transforms.Resize((image_size, image_size)),
         transforms.ToTensor(),
@@ -49,7 +49,10 @@ def predict_from_video(model, video_path, device):
     if len(faces) == 0:
         return {"error": "No faces detected in video"}
 
-    input_tensor = preprocess_faces(faces).unsqueeze(0).to(device)
+    # input_tensor = preprocess_faces(faces).unsqueeze(0).to(device)
+    input_tensor = preprocess_faces(faces).to(device)  # shape: [seq_len, 3, 112, 112]
+    input_tensor = input_tensor.unsqueeze(0)           # shape: [1, seq_len, 3, 112, 112]
+
     with torch.no_grad():
         _, output = model(input_tensor)
         probs = torch.softmax(output, dim=1).squeeze()
@@ -60,6 +63,8 @@ def predict_from_video(model, video_path, device):
         "class": int(predicted_class),
         "confidence": float(confidence)
     }
+
+
 
 ##### Cannot use this code as it is not working #####
 # import torch
@@ -91,29 +96,76 @@ def predict_from_video(model, video_path, device):
 #     def __len__(self):
 #         return 1
 
+#     # def __getitem__(self, idx):
+#     #     frames = []
+#     #     cap = cv2.VideoCapture(self.video_path)
+#     #     success, frame = cap.read()
+#     #     while success and len(frames) < self.sequence_length:
+#     #         faces = face_recognition.face_locations(frame)
+#     #         if faces:
+#     #             try:
+#     #                 top, right, bottom, left = faces[0]
+#     #                 face_img = frame[top:bottom, left:right, :]
+#     #                 if self.transform:
+#     #                     face_img = self.transform(face_img)
+#     #                 frames.append(face_img)
+#     #             except:
+#     #                 pass
+#     #         success, frame = cap.read()
+#     #     cap.release()
+
+#     #     # Pad with zeros if not enough frames
+#     #     while len(frames) < self.sequence_length:
+#     #         frames.append(torch.zeros_like(frames[0]))
+
+#     #     return torch.stack(frames).unsqueeze(0)  # shape: (1, seq_len, C, H, W)
 #     def __getitem__(self, idx):
 #         frames = []
 #         cap = cv2.VideoCapture(self.video_path)
 #         success, frame = cap.read()
+
 #         while success and len(frames) < self.sequence_length:
-#             faces = face_recognition.face_locations(frame)
+#             if frame is None or frame.size == 0:
+#                 success, frame = cap.read()
+#                 continue
+
+#             try:
+#                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#             except Exception as e:
+#                 print("Color conversion failed:", e)
+#                 success, frame = cap.read()
+#                 continue
+
+#             try:
+#                 faces = face_recognition.face_locations(rgb_frame)
+#             except Exception as e:
+#                 print("face_recognition failed:", e)
+#                 success, frame = cap.read()
+#                 continue
+
 #             if faces:
 #                 try:
 #                     top, right, bottom, left = faces[0]
-#                     face_img = frame[top:bottom, left:right, :]
+#                     face_img = rgb_frame[top:bottom, left:right, :]
 #                     if self.transform:
 #                         face_img = self.transform(face_img)
 #                     frames.append(face_img)
-#                 except:
-#                     pass
+#                 except Exception as e:
+#                     print("Cropping or transform failed:", e)
+
 #             success, frame = cap.read()
+
 #         cap.release()
 
-#         # Pad with zeros if not enough frames
+#         if not frames:
+#             raise ValueError("No faces were detected in any frame of the video.")
+
 #         while len(frames) < self.sequence_length:
 #             frames.append(torch.zeros_like(frames[0]))
 
 #         return torch.stack(frames).unsqueeze(0)  # shape: (1, seq_len, C, H, W)
+
+
 
 # # Prediction function with heatmap disabled
 # def predict_from_video(model, video_path, device):
