@@ -126,4 +126,4 @@ If a deepfake is detected:
 
 uvicorn backend.main:app --reload -->
 
-uvicorn backend.main:app --host 0.0.0.0 --port 3000
+<!-- uvicorn backend.main:app --host 0.0.0.0 --port 3000 -->

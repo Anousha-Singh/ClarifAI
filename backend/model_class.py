@@ -5,8 +5,8 @@ from torchvision.models import resnext50_32x4d, ResNeXt50_32X4D_Weights
 class Model(nn.Module):
     def __init__(self, num_classes, latent_dim=2048, lstm_layers=1, hidden_dim=2048, bidirectional=False):
         super(Model, self).__init__()
-        # weights = ResNeXt50_32X4D_Weights.IMAGENET1K_V1
-        model = resnext50_32x4d(weights=None)
+        weights = ResNeXt50_32X4D_Weights.IMAGENET1K_V1
+        model = resnext50_32x4d(weights=weights)
         self.model = nn.Sequential(*list(model.children())[:-2])
         self.lstm = nn.LSTM(latent_dim, hidden_dim, lstm_layers, bidirectional)
         self.relu = nn.LeakyReLU()

@@ -9,7 +9,7 @@ from backend.predict_utils import predict_from_video
 import gdown
 
 # Extracted file ID from the Google Drive share link
-FILE_ID = "1nn4yUdbov7POAuMaFeJRiCLVwGTUU_hk"
+FILE_ID = "15XBuoqkHbr9lNX6izXVh6wVlji90RQ26"
 MODEL_PATH = os.path.join("backend", "model.pt")
 
 if not os.path.exists(MODEL_PATH):
