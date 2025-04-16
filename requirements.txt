@@ -8,5 +8,6 @@ fastapi>=0.95.0
 uvicorn[standard]>=0.22.0
 python-multipart>=0.0.6
 gdown>=5.2.0
+gunicorn>=21.2.0
 
 

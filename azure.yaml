@@ -1,0 +1,15 @@
+name: clarifai
+services:
+  - name: clarifai-web
+    project: ./
+    language: node
+    host: appservice
+    env:
+      - name: NODE_VERSION
+        value: "18"
+      - name: SCM_DO_BUILD_DURING_DEPLOYMENT
+        value: "true"
+    scale:
+      min_instances: 1
+      max_instances: 3
+    sku: F1  # Using free tier for frontend

@@ -1,0 +1,19 @@
+name: clarifai-backend
+services:
+  - name: clarifai-api
+    project: ./
+    language: python
+    host: appservice
+    env:
+      - name: PYTHON_VERSION
+        value: "3.12"
+      - name: WEBSITES_PORT
+        value: "8000"
+      - name: SCM_DO_BUILD_DURING_DEPLOYMENT
+        value: "true"
+      - name: ENABLE_ORYX_BUILD
+        value: "true"
+    sku: B1s  # Using B1s tier for cost optimization
+    scale:
+      min_instances: 1
+      max_instances: 1  # Limiting max instances to control costs
