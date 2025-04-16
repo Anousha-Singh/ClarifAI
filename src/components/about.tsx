@@ -1,6 +1,8 @@
 "use client"
 import React from 'react';
-import { Shield, Scale, Heart, Brain, Menu, X, Globe, Users, BookOpen, Award, CheckCircle } from 'lucide-react';
+import { Shield, Scale, Brain, Menu, X,  CheckCircle } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 const AboutUsPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState<boolean>(false);
@@ -73,7 +75,7 @@ const AboutUsPage = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <img width="35px" src="logo.svg" alt="ClarifAI Logo" />
+              <Image width={35} height={35} src="/logo.svg" alt="ClarifAI Logo" />
               <span className="pl-2 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
                 ClarifAI
               </span>
@@ -229,12 +231,12 @@ const AboutUsPage = () => {
         {/* Call to Action */}
         <div className="text-center mb-16">
           <h2 className="text-2xl md:text-3xl font-bold mb-6">Ready to Verify Content?</h2>
-          <a 
+          <Link 
             href="/"
             className="inline-block py-4 px-8 rounded-xl font-medium text-sm bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transform hover:-translate-y-1 transition-all duration-300"
           >
             Try ClarifAI Now
-          </a>
+          </Link>
         </div>
       </main>
 

@@ -8,15 +8,19 @@ from model_class import Model
 from predict_utils import predict_from_video
 import gdown
 
+# Get the absolute path of the current directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+os.makedirs(MODEL_DIR, exist_ok=True)
+
 # Extracted file ID from the Google Drive share link
 FILE_ID = "15XBuoqkHbr9lNX6izXVh6wVlji90RQ26"
-MODEL_PATH = os.path.join("backend", "model.pt")
+MODEL_PATH = os.path.join(MODEL_DIR, "model.pt")
 
 if not os.path.exists(MODEL_PATH):
     # Generate the correct download URL
     download_url = f"https://drive.google.com/uc?id={FILE_ID}"
     gdown.download(download_url, MODEL_PATH, quiet=False)
-
 
 app = FastAPI()
 
@@ -30,43 +34,46 @@ app.add_middleware(
 )
 
 # Load model
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-model_path = os.path.join(os.path.dirname(__file__), "model.pt")
-
 model = Model(num_classes=2)
-model.load_state_dict(torch.load(model_path, map_location="cpu"))
+model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu"))
 model.eval()
 model.to("cpu")
 
-UPLOAD_DIR = "uploads"
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/predict")
 async def predict(video: UploadFile = File(...)):
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    file_path = os.path.join(UPLOAD_DIR, video.filename)
+    try:
+        file_path = os.path.join(UPLOAD_DIR, video.filename)
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(video.file, buffer)
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(video.file, buffer)
+        result = predict_from_video(model, file_path, "cpu")  
 
-    result = predict_from_video(model, file_path, "cpu")  
+        try:
+            os.remove(file_path)
+        except:
+            pass  # Ignore cleanup errors
 
-    os.remove(file_path)
+        if "error" in result:
+            return JSONResponse(status_code=400, content={"error": result["error"]})
 
-    if "error" in result:
-        return JSONResponse(status_code=400, content={"error": result["error"]})
+        label = "fake" if result["class"] == 1 else "real"
+        confidence = result["confidence"]
 
-    label = "fake" if result["class"] == 1 else "real"
-    confidence = result["confidence"]
-
-    return {
-        "prediction": label,
-        "confidence": confidence
-    }
-
+        return {
+            "prediction": label,
+            "confidence": confidence
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"An error occurred: {str(e)}"}
+        )
 
 @app.get("/")
 def read_root():
-    return {"message": "Deepfake Detection API is running "}
+    return {"message": "Deepfake Detection API is running"}
 

@@ -4,6 +4,7 @@ import React from 'react'
 import PropTypes from 'prop-types';
 import AboutUsPage from '../components/about';
 import { Upload, Shield, Scale, Heart, Brain, Menu, X } from 'lucide-react';
+import Image from 'next/image';
 
 interface CustomAlertProps {
   children: React.ReactNode;
@@ -245,8 +246,7 @@ const App: React.FC = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              {/* <Shield className="w-8 h-8 text-blue-400" /> */}
-              <img width="35px" src="logo.svg" alt="" />
+              <Image width={35} height={35} src="/logo.svg" alt="ClarifAI Logo" />
               <span className="pl-2 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
                 ClarifAI
               </span>
