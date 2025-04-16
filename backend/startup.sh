@@ -22,14 +22,5 @@ if not os.path.exists(MODEL_PATH):
 EOF
 fi
 
-# Start FastAPI application with improved settings
-exec gunicorn main:app \
-    --bind=0.0.0.0:8000 \
-    --workers=2 \
-    --worker-class=uvicorn.workers.UvicornWorker \
-    --timeout=300 \
-    --keep-alive=120 \
-    --access-logfile=- \
-    --error-logfile=- \
-    --log-level=info \
-    --worker-tmp-dir=/dev/shm
+# Start FastAPI application with uvicorn
+exec uvicorn main:app --host 0.0.0.0 --port $PORT
