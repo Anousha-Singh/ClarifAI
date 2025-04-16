@@ -43,6 +43,7 @@ jobs:
     - name: Prepare deployment package
       run: |
         cd backend
+        chmod +x startup.sh
         zip -r ../deploy.zip ./*
         
     - name: Login to Azure
@@ -52,6 +53,12 @@ jobs:
         tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3B0DE5BE0AA2436B8645FF2B3B9EBE5E }}
         subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BA64C9CE0DBB44359EB571DBBD3E6A4F }}
         enable-AzPSSession: true
+
+    - name: Stop Web App
+      shell: pwsh
+      run: |
+        az webapp stop --name clarifai-api --resource-group clarifai-rg
+        Start-Sleep -Seconds 30
         
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v3
@@ -60,3 +67,8 @@ jobs:
         app-name: 'clarifai-api'
         slot-name: 'Production'
         package: deploy.zip
+        
+    - name: Start Web App
+      shell: pwsh
+      run: |
+        az webapp start --name clarifai-api --resource-group clarifai-rg
