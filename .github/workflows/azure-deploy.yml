@@ -60,6 +60,11 @@ jobs:
         az webapp stop --name clarifai-api --resource-group clarifai-rg
         Start-Sleep -Seconds 30
         
+    - name: Add delay before deployment
+      shell: pwsh
+      run: |
+        Start-Sleep -Seconds 60  # Wait for 60 seconds to ensure the app service is stable before deployment
+
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v3
       id: deploy-to-webapp
