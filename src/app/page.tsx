@@ -109,6 +109,8 @@ const App: React.FC = () => {
     return ['video/mp4', 'video/quicktime'].includes(file.type);
   };
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedFile) return;
@@ -121,7 +123,7 @@ const App: React.FC = () => {
     formData.append('video', selectedFile);
   
     try {
-      const response = await fetch('https://clarifai-api.azurewebsites.net', {
+      const response = await fetch(`${API_BASE_URL}/predict`, {
         method: 'POST',
         body: formData,
       });

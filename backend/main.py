@@ -6,8 +6,8 @@ import shutil
 import os
 import time
 import logging
-from model_class import Model
-from predict_utils import predict_from_video
+from .model_class import Model
+from .predict_utils import predict_from_video
 import gdown
 import traceback
 
@@ -29,7 +29,7 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://clarifai-omega.vercel.app"],
+    allow_origins=["https://clarifai-omega.vercel.app", "http://localhost:3000"],  # Added localhost for development
     allow_credentials=False,  # Set to False since we're not using credentials
     allow_methods=["POST", "GET", "OPTIONS"],
     allow_headers=["*"],
@@ -67,7 +67,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # Add maximum file size (50MB)
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB in bytes
 
-@app.post("/")
+@app.post("/predict")
 async def predict(video: UploadFile = File(...), background_tasks: BackgroundTasks = None):
     try:
         # Log request details
@@ -176,7 +176,7 @@ async def predict(video: UploadFile = File(...), background_tasks: BackgroundTas
             content={"error": f"An unexpected error occurred: {str(e)}"}
         )
 
-# @app.get("/")
-# def read_root():
-#     return {"message": "Deepfake Detection API is running"}
+@app.get("/")
+def read_root():
+     return {"message": "Deepfake Detection API is running"}
 
