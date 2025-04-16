@@ -2,6 +2,7 @@
 import { useState, FormEvent, ChangeEvent, DragEvent } from 'react';
 import React from 'react'
 import PropTypes from 'prop-types';
+import AboutUsPage from '../components/about';
 import { Upload, Shield, Scale, Heart, Brain, Menu, X } from 'lucide-react';
 
 interface CustomAlertProps {
@@ -39,6 +40,8 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+
+  const [showAbout, setShowAbout] = useState(false);
   
   // Contact form state
   const [contactModalOpen, setContactModalOpen] = useState<boolean>(false);
@@ -251,30 +254,26 @@ const App: React.FC = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <a
+              <button
                 className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
-                href="#"
+                onClick={() => setShowAbout(true)}
               >
                 About
-              </a>
+              </button>
               <button
                 className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
                 onClick={openEthicsModal}
               >
-                Ethics
+                Terms & Conditions
               </button>
-              <a
-                className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
-                href="#"
-              >
-                Transparency
-              </a>
+              
               <button
                 className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
                 onClick={handleContactClick}
               >
                 Contact
               </button>
+              
             </nav>
 
             {/* Mobile Menu Button */}
@@ -303,15 +302,9 @@ const App: React.FC = () => {
                   setMobileMenuOpen(false);
                 }}
               >
-                Ethics
+                Terms & Conditions
               </button>
-              <a
-                className="block py-2 text-gray-300 hover:text-white transition-colors"
-                href="#"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Transparency
-              </a>
+              
               <button
                 className="block w-full text-left py-2 text-gray-300 hover:text-white transition-colors"
                 onClick={() => {
@@ -340,6 +333,23 @@ const App: React.FC = () => {
             Advanced detection powered by AI technology
           </p>
         </div>
+
+        {showAbout && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-70 backdrop-blur-sm overflow-y-auto">
+          <div className="relative max-w-6xl mx-auto p-4 bg-black rounded-xl shadow-lg mt-8">
+            {/* Close Button */}
+            <button
+              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+              onClick={() => setShowAbout(false)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Render the page */}
+            <AboutUsPage />
+          </div>
+        </div>
+      )}
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12 md:mb-20">
@@ -456,7 +466,7 @@ const App: React.FC = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
             <div>
-              <h4 className="font-semibold mb-4">About</h4>
+              <button onClick={AboutUsPage} className="font-semibold mb-4">About</button>
               <p className="text-sm text-gray-400">Committed to ethical AI practices and digital authenticity.</p>
             </div>
             <div>
