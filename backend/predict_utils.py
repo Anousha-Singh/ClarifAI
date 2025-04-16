@@ -66,7 +66,6 @@ def predict_from_video(model, video_path, device):
         if isinstance(faces, dict) and "error" in faces:
             return faces
 
-        # input_tensor = preprocess_faces(faces).unsqueeze(0).to(device)
         input_tensor = preprocess_faces(faces).to(device)  # shape: [seq_len, 3, 112, 112]
         input_tensor = input_tensor.unsqueeze(0)           # shape: [1, seq_len, 3, 112, 112]
 
