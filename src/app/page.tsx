@@ -121,7 +121,7 @@ const App: React.FC = () => {
     formData.append('video', selectedFile);
   
     try {
-      const response = await fetch('https://clarifai-api.azurewebsites.net/predict', {
+      const response = await fetch('https://clarifai-api.azurewebsites.net', {
         method: 'POST',
         body: formData,
       });

@@ -67,7 +67,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # Add maximum file size (50MB)
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB in bytes
 
-@app.post("/predict")
+@app.post("/")
 async def predict(video: UploadFile = File(...), background_tasks: BackgroundTasks = None):
     try:
         # Log request details
@@ -176,7 +176,7 @@ async def predict(video: UploadFile = File(...), background_tasks: BackgroundTas
             content={"error": f"An unexpected error occurred: {str(e)}"}
         )
 
-@app.get("/")
-def read_root():
-    return {"message": "Deepfake Detection API is running"}
+# @app.get("/")
+# def read_root():
+#     return {"message": "Deepfake Detection API is running"}
 
