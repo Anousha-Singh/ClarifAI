@@ -1,2 +1,4 @@
 [config]
 command = bash startup.sh
+SCM_DO_BUILD_DURING_DEPLOYMENT=1
+POST_BUILD_COMMAND=pip install --upgrade pip
