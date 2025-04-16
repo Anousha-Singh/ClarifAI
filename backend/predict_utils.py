@@ -8,32 +8,48 @@ from PIL import Image
 mtcnn = MTCNN(keep_all=True, device='cuda' if torch.cuda.is_available() else 'cpu')
 
 def extract_faces_from_video(video_path, max_frames=32):
-    cap = cv2.VideoCapture(video_path)
-    faces = []
-    frame_count = 0
+    try:
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            return {"error": "Failed to open video file"}
+            
+        faces = []
+        frame_count = 0
 
-    while cap.isOpened() and frame_count < max_frames:
-        ret, frame = cap.read()
-        if not ret:
-            break
+        while cap.isOpened() and frame_count < max_frames:
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        boxes, _ = mtcnn.detect(frame_rgb)
+            try:
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                boxes, _ = mtcnn.detect(frame_rgb)
 
-        if boxes is not None:
-            for box in boxes:
-                x1, y1, x2, y2 = [int(b) for b in box]
-                face = frame_rgb[y1:y2, x1:x2]
-                face = Image.fromarray(face)
-                faces.append(face)
-                frame_count += 1
-                break  # Take one face per frame
+                if boxes is not None:
+                    for box in boxes:
+                        x1, y1, x2, y2 = [int(b) for b in box]
+                        face = frame_rgb[y1:y2, x1:x2]
+                        face = Image.fromarray(face)
+                        faces.append(face)
+                        frame_count += 1
+                        break  # Take one face per frame
 
-        if frame_count >= max_frames:
-            break
+            except Exception as e:
+                print(f"Error processing frame: {str(e)}")
+                continue
 
-    cap.release()
-    return faces
+            if frame_count >= max_frames:
+                break
+
+        cap.release()
+        
+        if len(faces) == 0:
+            return {"error": "No faces detected in the video"}
+            
+        return faces
+        
+    except Exception as e:
+        return {"error": f"Failed to process video: {str(e)}"}
 
 def preprocess_faces(faces, image_size=112):
     transform = transforms.Compose([
@@ -45,24 +61,31 @@ def preprocess_faces(faces, image_size=112):
     return torch.stack([transform(face) for face in faces])
 
 def predict_from_video(model, video_path, device):
-    faces = extract_faces_from_video(video_path)
-    if len(faces) == 0:
-        return {"error": "No faces detected in video"}
+    try:
+        faces = extract_faces_from_video(video_path)
+        if isinstance(faces, dict) and "error" in faces:
+            return faces
 
-    # input_tensor = preprocess_faces(faces).unsqueeze(0).to(device)
-    input_tensor = preprocess_faces(faces).to(device)  # shape: [seq_len, 3, 112, 112]
-    input_tensor = input_tensor.unsqueeze(0)           # shape: [1, seq_len, 3, 112, 112]
+        # input_tensor = preprocess_faces(faces).unsqueeze(0).to(device)
+        input_tensor = preprocess_faces(faces).to(device)  # shape: [seq_len, 3, 112, 112]
+        input_tensor = input_tensor.unsqueeze(0)           # shape: [1, seq_len, 3, 112, 112]
 
-    with torch.no_grad():
-        _, output = model(input_tensor)
-        probs = torch.softmax(output, dim=1).squeeze()
-        predicted_class = torch.argmax(probs).item()
-        confidence = probs[predicted_class].item()
+        with torch.no_grad():
+            try:
+                _, output = model(input_tensor)
+                probs = torch.softmax(output, dim=1).squeeze()
+                predicted_class = torch.argmax(probs).item()
+                confidence = probs[predicted_class].item()
 
-    return {
-        "class": int(predicted_class),
-        "confidence": float(confidence)
-    }
+                return {
+                    "class": int(predicted_class),
+                    "confidence": float(confidence)
+                }
+            except Exception as e:
+                return {"error": f"Model inference failed: {str(e)}"}
+
+    except Exception as e:
+        return {"error": f"Prediction failed: {str(e)}"}
 
 
 

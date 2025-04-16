@@ -114,6 +114,9 @@ const App: React.FC = () => {
     if (!selectedFile) return;
   
     setLoading(true);
+    setPrediction(null);
+    setConfidence(null);
+    
     const formData = new FormData();
     formData.append('video', selectedFile);
   
@@ -123,13 +126,23 @@ const App: React.FC = () => {
         body: formData,
       });
   
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
+      }
+  
       const data = await response.json();
-      console.log('Response:', data);
+      if (!data || typeof data.prediction === 'undefined' || typeof data.confidence === 'undefined') {
+        throw new Error('Invalid response format from server');
+      }
   
       setPrediction(data.prediction);
       setConfidence(data.confidence);
     } catch (error) {
       console.error('Error:', error);
+      // Show error in UI
+      setPrediction('error');
+      setConfidence(null);
     } finally {
       setLoading(false);
     }

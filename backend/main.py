@@ -61,37 +61,69 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 @app.post("/predict")
 async def predict(video: UploadFile = File(...), background_tasks: BackgroundTasks = None):
     try:
+        # Validate file type
+        if not video.filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Invalid file format. Please upload a video file."}
+            )
+
         current_model = get_model()
         file_path = os.path.join(UPLOAD_DIR, video.filename)
         
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(video.file, buffer)
-
-        result = predict_from_video(current_model, file_path, "cpu")  
+        try:
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(video.file, buffer)
+        except Exception as e:
+            return JSONResponse(
+                status_code=500,
+                content={"error": f"Failed to save video file: {str(e)}"}
+            )
 
         try:
-            os.remove(file_path)
-        except:
-            pass  # Ignore cleanup errors
+            result = predict_from_video(current_model, file_path, "cpu")
+        except Exception as e:
+            return JSONResponse(
+                status_code=500,
+                content={"error": f"Failed to process video: {str(e)}"}
+            )
+        finally:
+            # Always try to clean up the uploaded file
+            try:
+                os.remove(file_path)
+            except:
+                pass
 
-        if "error" in result:
-            return JSONResponse(status_code=400, content={"error": result["error"]})
+        if isinstance(result, dict) and "error" in result:
+            return JSONResponse(
+                status_code=400,
+                content={"error": result["error"]}
+            )
+
+        if not isinstance(result, dict) or "class" not in result or "confidence" not in result:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Invalid prediction result format"}
+            )
 
         label = "fake" if result["class"] == 1 else "real"
-        confidence = result["confidence"]
+        confidence = float(result["confidence"])  # Ensure confidence is a float
 
         # Schedule cleanup after response
         if background_tasks:
             background_tasks.add_task(cleanup_resources)
 
-        return {
-            "prediction": label,
-            "confidence": confidence
-        }
+        return JSONResponse(
+            status_code=200,
+            content={
+                "prediction": label,
+                "confidence": confidence
+            }
+        )
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"error": f"An error occurred: {str(e)}"}
+            content={"error": f"An unexpected error occurred: {str(e)}"}
         )
 
 @app.get("/")
