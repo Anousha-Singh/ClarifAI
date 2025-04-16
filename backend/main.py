@@ -24,16 +24,15 @@ if not os.path.exists(MODEL_PATH):
 
 app = FastAPI()
 
-# CORS for frontend access
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://clarifai-omega.vercel.app",
-        "http://localhost:3000"  # For local development
-    ],
+    allow_origins=["https://clarifai-omega.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 # Resource optimization
