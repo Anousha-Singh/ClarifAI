@@ -4,19 +4,27 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'backend/**'
+      - 'requirements.txt'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
     steps:
-    - uses: actions/checkout@v2
-    
+    - uses: actions/checkout@v4
+
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
+        cache: 'pip'
     
     - name: Install dependencies
       run: |
@@ -28,13 +36,22 @@ jobs:
         mkdir -p backend/models
         mkdir -p backend/uploads
         
-    - name: Azure Login
-      uses: azure/login@v1
+    - name: Prepare deployment package
+      run: |
+        cd backend
+        zip -r ../deploy.zip ./*
+        
+    - name: Login to Azure
+      uses: azure/login@v2
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A02AADC81E2D4148BEC128D3E1423B99 }}
+        tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3B0DE5BE0AA2436B8645FF2B3B9EBE5E }}
+        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BA64C9CE0DBB44359EB571DBBD3E6A4F }}
         
     - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v2
+      uses: azure/webapps-deploy@v3
+      id: deploy-to-webapp
       with:
         app-name: 'clarifai-api'
-        package: './backend'
+        slot-name: 'Production'
+        package: deploy.zip
