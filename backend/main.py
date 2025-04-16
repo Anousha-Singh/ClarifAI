@@ -4,8 +4,8 @@ from fastapi.responses import JSONResponse
 import torch
 import shutil
 import os
-from backend.model_class import Model
-from backend.predict_utils import predict_from_video
+from model_class import Model
+from predict_utils import predict_from_video
 import gdown
 
 # Extracted file ID from the Google Drive share link
