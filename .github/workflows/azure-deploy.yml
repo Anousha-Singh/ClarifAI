@@ -10,6 +10,10 @@ on:
       - '.github/workflows/**'
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -47,6 +51,7 @@ jobs:
         client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A02AADC81E2D4148BEC128D3E1423B99 }}
         tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3B0DE5BE0AA2436B8645FF2B3B9EBE5E }}
         subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BA64C9CE0DBB44359EB571DBBD3E6A4F }}
+        enable-AzPSSession: true
         
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v3
