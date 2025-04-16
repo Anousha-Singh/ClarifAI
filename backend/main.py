@@ -69,25 +69,27 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB in bytes
 
 @app.post("/predict")
 async def predict(video: UploadFile = File(...), background_tasks: BackgroundTasks = None):
+    logger.info("Received request at /predict")
     try:
         # Log request details
-        logger.info(f"Received video upload request: {video.filename}")
-        
+        logger.info(f"Request headers: {video.headers}")
+        logger.info(f"Uploaded file: {video.filename}, Content type: {video.content_type}")
+
         # Check file size
-        file_size = 0
         contents = await video.read()
         file_size = len(contents)
+        logger.info(f"File size: {file_size} bytes")
         await video.seek(0)  # Reset file position
-        
+
         if file_size > MAX_FILE_SIZE:
             logger.warning(f"File too large: {file_size} bytes")
             return JSONResponse(
                 status_code=400,
                 content={"error": f"File size exceeds maximum limit of {MAX_FILE_SIZE//1024//1024}MB"}
             )
-        
+
         # Validate file type
-        if not video.filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
+        if not video.filename.lower().endswith((".mp4", ".avi", ".mov", ".mkv")):
             logger.warning(f"Invalid file format: {video.filename}")
             return JSONResponse(
                 status_code=400,
@@ -106,7 +108,7 @@ async def predict(video: UploadFile = File(...), background_tasks: BackgroundTas
             )
 
         file_path = os.path.join(UPLOAD_DIR, video.filename)
-        
+
         # Save uploaded file
         try:
             with open(file_path, "wb") as buffer:
@@ -156,12 +158,13 @@ async def predict(video: UploadFile = File(...), background_tasks: BackgroundTas
         label = "fake" if result["class"] == 1 else "real"
         confidence = float(result["confidence"])  # Ensure confidence is a float
 
+        logger.info(f"Prediction successful: Label={label}, Confidence={confidence}")
+
         # Schedule cleanup
         if background_tasks:
             background_tasks.add_task(cleanup_resources)
             logger.info("Scheduled resource cleanup")
 
-        logger.info(f"Successful prediction: {label} with confidence {confidence}")
         return JSONResponse(
             status_code=200,
             content={
@@ -170,7 +173,7 @@ async def predict(video: UploadFile = File(...), background_tasks: BackgroundTas
             }
         )
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}\n{traceback.format_exc()}")
+        logger.error(f"Unexpected error in /predict: {str(e)}\n{traceback.format_exc()}")
         return JSONResponse(
             status_code=500,
             content={"error": f"An unexpected error occurred: {str(e)}"}
