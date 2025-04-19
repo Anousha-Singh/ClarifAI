@@ -109,7 +109,7 @@ const App: React.FC = () => {
     return ['video/mp4', 'video/quicktime'].includes(file.type);
   };
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL =  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

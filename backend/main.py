@@ -1,185 +1,71 @@
-from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse 
 import torch
 import shutil
 import os
-import time
-import logging
-from .model_class import Model
-from .predict_utils import predict_from_video
+from backend.model_class import Model
+from backend.predict_utils import predict_from_video
 import gdown
-import traceback
-
-# Get the absolute path of the current directory
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_DIR = os.path.join(BASE_DIR, "models")
-os.makedirs(MODEL_DIR, exist_ok=True)
 
 # Extracted file ID from the Google Drive share link
-FILE_ID = "15XBuoqkHbr9lNX6izXVh6wVlji90RQ26"
-MODEL_PATH = os.path.join(MODEL_DIR, "model.pt")
+FILE_ID = "1Evo-JYu5sEl4Mxn6AsmShVjd9TorK88Z"
+MODEL_PATH = os.path.join("backend", "model.pt")
 
 if not os.path.exists(MODEL_PATH):
+    # Generate the correct download URL
     download_url = f"https://drive.google.com/uc?id={FILE_ID}"
     gdown.download(download_url, MODEL_PATH, quiet=False)
 
+
 app = FastAPI()
 
-# Configure CORS
+# CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://clarifai-omega.vercel.app", "http://localhost:3000"],  # Added localhost for development
-    allow_credentials=False,  # Set to False since we're not using credentials
-    allow_methods=["POST", "GET", "OPTIONS"],
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=86400,  # Cache preflight requests for 24 hours
 )
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Load model
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Resource optimization
-model = None
-last_request_time = None
-MODEL_UNLOAD_DELAY = 300  # Unload model after 5 minutes of inactivity
+model_path = os.path.join(os.path.dirname(__file__), "model.pt")
 
-def get_model():
-    global model, last_request_time
-    if model is None:
-        model = Model(num_classes=2)
-        model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu"))
-        model.eval()
-    last_request_time = time.time()
-    return model
+model = Model(num_classes=2)
+model.load_state_dict(torch.load(model_path, map_location="cpu"))
+model.eval()
+model.to("cpu")
 
-def cleanup_resources():
-    global model, last_request_time
-    if last_request_time and time.time() - last_request_time > MODEL_UNLOAD_DELAY:
-        model = None
-        torch.cuda.empty_cache()
-
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Add maximum file size (50MB)
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB in bytes
-
 @app.post("/predict")
-async def predict(video: UploadFile = File(...), background_tasks: BackgroundTasks = None):
-    logger.info("Received request at /predict")
-    try:
-        # Log request details
-        logger.info(f"Request headers: {video.headers}")
-        logger.info(f"Uploaded file: {video.filename}, Content type: {video.content_type}")
+async def predict(video: UploadFile = File(...)):
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    file_path = os.path.join(UPLOAD_DIR, video.filename)
 
-        # Check file size
-        contents = await video.read()
-        file_size = len(contents)
-        logger.info(f"File size: {file_size} bytes")
-        await video.seek(0)  # Reset file position
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(video.file, buffer)
 
-        if file_size > MAX_FILE_SIZE:
-            logger.warning(f"File too large: {file_size} bytes")
-            return JSONResponse(
-                status_code=400,
-                content={"error": f"File size exceeds maximum limit of {MAX_FILE_SIZE//1024//1024}MB"}
-            )
+    result = predict_from_video(model, file_path, "cpu")  
 
-        # Validate file type
-        if not video.filename.lower().endswith((".mp4", ".avi", ".mov", ".mkv")):
-            logger.warning(f"Invalid file format: {video.filename}")
-            return JSONResponse(
-                status_code=400,
-                content={"error": "Invalid file format. Please upload a video file."}
-            )
+    os.remove(file_path)
 
-        # Ensure model is loaded
-        try:
-            current_model = get_model()
-            logger.info("Model loaded successfully")
-        except Exception as e:
-            logger.error(f"Failed to load model: {str(e)}\n{traceback.format_exc()}")
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Failed to load the model"}
-            )
+    if "error" in result:
+        return JSONResponse(status_code=400, content={"error": result["error"]})
 
-        file_path = os.path.join(UPLOAD_DIR, video.filename)
+    label = "fake" if result["class"] == 1 else "real"
+    confidence = result["confidence"]
 
-        # Save uploaded file
-        try:
-            with open(file_path, "wb") as buffer:
-                buffer.write(contents)
-            logger.info(f"Video saved successfully to {file_path}")
-        except Exception as e:
-            logger.error(f"Failed to save video file: {str(e)}\n{traceback.format_exc()}")
-            return JSONResponse(
-                status_code=500,
-                content={"error": f"Failed to save video file: {str(e)}"}
-            )
+    return {
+        "prediction": label,
+        "confidence": confidence
+    }
 
-        # Process video
-        try:
-            logger.info("Starting video processing")
-            result = predict_from_video(current_model, file_path, torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
-            logger.info(f"Video processing completed: {result}")
-        except Exception as e:
-            logger.error(f"Failed to process video: {str(e)}\n{traceback.format_exc()}")
-            return JSONResponse(
-                status_code=500,
-                content={"error": f"Failed to process video: {str(e)}"}
-            )
-        finally:
-            # Clean up the uploaded file
-            try:
-                os.remove(file_path)
-                logger.info(f"Cleaned up temporary file: {file_path}")
-            except Exception as e:
-                logger.error(f"Failed to clean up file: {str(e)}")
-
-        # Validate result format
-        if isinstance(result, dict) and "error" in result:
-            logger.error(f"Error in prediction result: {result['error']}")
-            return JSONResponse(
-                status_code=400,
-                content={"error": result["error"]}
-            )
-
-        if not isinstance(result, dict) or "class" not in result or "confidence" not in result:
-            logger.error(f"Invalid prediction result format: {result}")
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Invalid prediction result format"}
-            )
-
-        label = "fake" if result["class"] == 1 else "real"
-        confidence = float(result["confidence"])  # Ensure confidence is a float
-
-        logger.info(f"Prediction successful: Label={label}, Confidence={confidence}")
-
-        # Schedule cleanup
-        if background_tasks:
-            background_tasks.add_task(cleanup_resources)
-            logger.info("Scheduled resource cleanup")
-
-        return JSONResponse(
-            status_code=200,
-            content={
-                "prediction": label,
-                "confidence": confidence
-            }
-        )
-    except Exception as e:
-        logger.error(f"Unexpected error in /predict: {str(e)}\n{traceback.format_exc()}")
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"An unexpected error occurred: {str(e)}"}
-        )
 
 @app.get("/")
 def read_root():
-     return {"message": "Deepfake Detection API is running"}
-
+    return {"message": "Deepfake Detection API is running "}
