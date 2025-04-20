@@ -17,7 +17,7 @@
 /.next/
 /out/
 get-pip.py
-model.pt
+*.pt
 /backend/venv/
 
 

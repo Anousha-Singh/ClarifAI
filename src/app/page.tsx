@@ -677,7 +677,7 @@ const App: React.FC = () => {
 
                 <h4 className="text-xl font-medium text-blue-400 mb-4">8. Governing Law</h4>
                 <p className="text-gray-300 mb-4">
-                  These terms shall be governed by and construed in accordance with the laws of [Jurisdiction], without regard to its conflict of law provisions.
+                  These terms shall be governed by and construed in accordance with the laws of Government of India, without regard to its conflict of law provisions.
                 </p>
 
                 <h4 className="text-xl font-medium text-blue-400 mb-4">9. Contact Information</h4>
