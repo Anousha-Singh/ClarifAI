@@ -1,17 +1,20 @@
 "use client"
-import { useState, FormEvent, ChangeEvent, DragEvent } from 'react';
+import { useState, FormEvent, ChangeEvent, DragEvent, useEffect } from 'react';
 import React from 'react'
 import PropTypes from 'prop-types';
 import AboutUsPage from '../components/about';
 import { Upload, Shield, Scale, Heart, Brain, Menu, X } from 'lucide-react';
 import Image from 'next/image';
+import emailjs from '@emailjs/browser';
 
 interface CustomAlertProps {
   children: React.ReactNode;
 }
 
 interface ContactForm {
+  title: string;
   name: string;
+  time:string;
   email: string;
   message: string;
 }
@@ -47,7 +50,9 @@ const App: React.FC = () => {
   // Contact form state
   const [contactModalOpen, setContactModalOpen] = useState<boolean>(false);
   const [contactForm, setContactForm] = useState<ContactForm>({
+    title:"Contact",
     name: '',
+    time:'00:00',
     email: '',
     message: ''
   });
@@ -178,6 +183,11 @@ const App: React.FC = () => {
     }));
   };
 
+  useEffect(() => {
+    // Initialize EmailJS with your public key
+    emailjs.init("VZHcH4sdDyvA9Vi5o"); // Replace with your actual public key
+  }, []);
+
   const handleContactSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -197,37 +207,29 @@ const App: React.FC = () => {
     try {
       setFormError("");
       
-      // Option 2: Using a third-party service like EmailJS
-      /* 
+      // Send the form data to clarifai.dfd@gmail.com using EmailJS
       await emailjs.send(
-        'YOUR_SERVICE_ID',  // Replace with your service ID
-        'YOUR_TEMPLATE_ID', // Replace with your template ID
-        contactForm,
-        'YOUR_USER_ID'      // Replace with your user ID
+        'service_mjusgzw',  // Replace with your EmailJS service ID
+        'template_f4rfipl', // Replace with your EmailJS template ID
+        {
+          ...contactForm,
+          to_email: 'clarifai.dfd@gmail.com'
+        },
+        // 'service_f687kb7'      // Replace with your EmailJS user ID
       );
-      */
-      
-      // Option 3: Using a serverless function (e.g., AWS Lambda, Netlify Functions)
-      /*
-      await fetch('/.netlify/functions/send-email', {
-        method: 'POST',
-        body: JSON.stringify(contactForm),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      */
       
       setFormSubmitted(true);
       
       // Reset form after successful submission
       setContactForm({
         name: '',
+        title:'Contact',
+        time:'00:00',
         email: '',
         message: ''
       });
       
-      // Optionally close the modal after a delay
+      // Close the modal after a delay
       setTimeout(() => {
         closeContactModal();
         setFormSubmitted(false);
@@ -447,16 +449,6 @@ const App: React.FC = () => {
               </button>
             </form>
 
-            {/* {prediction && (
-              <div className="mt-6 p-6 rounded-xl bg-white/5 border border-white/10 animate-fade-in">
-                <h3 className="text-xl font-semibold mb-3">Analysis Results</h3>
-                <p className="text-gray-300">
-                  {prediction === '0'
-                    ? 'This content appears to be authentic. However, we encourage critical thinking and verification from multiple sources.'
-                    : 'This content shows potential signs of manipulation. We recommend seeking additional verification and context.'}
-                </p>
-              </div>
-            )} */}
             {prediction && confidence !== null && (
               <div className="mt-6 p-6 rounded-xl bg-white/5 border border-white/10 animate-fade-in">
                 <h3 className="text-xl font-semibold mb-3">Analysis Results</h3>
