@@ -7,6 +7,8 @@ This project detects deepfake videos using a PyTorch-based model (ResNeXt + LSTM
 
 ---
 
+Dataset Link: https://github.com/yuezunli/celeb-deepfakeforensics
+
 ## 📁 Folder Structure
 
 ```
@@ -120,6 +122,8 @@ If a deepfake is detected:
 - `facenet-pytorch`, `torch`, `opencv-python`, `fastapi`, `uvicorn`, etc.
 
 ---
+
+
 
 
 <!-- backend\venv\Scripts\activate   (cmd) /clarifAI
